@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  mysql:
+    image: mysql:8.4
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: users_db
+      MYSQL_USER: users_user
+      MYSQL_PASSWORD: users_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./apps/api-gateway/Dockerfile
+    env_file: ./apps/api-gateway/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth
+      - email
+      - users
+
+  auth:
+    build:
+      context: .
+      dockerfile: ./apps/auth/Dockerfile
+    env_file: ./apps/auth/.env
+    ports:
+      - "3001:3000"
+
+  email:
+    build:
+      context: .
+      dockerfile: ./apps/email/Dockerfile
+    env_file: ./apps/email/.env
+    ports:
+      - "3002:3000"
+    depends_on:
+      - postgres
+
+  users:
+    build:
+      context: .
+      dockerfile: ./apps/users/Dockerfile
+    env_file: ./apps/users/.env
+    ports:
+      - "3003:3000"
+    depends_on:
+      - mysql
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"   # RabbitMQ main port
+      - "15672:15672" # RabbitMQ management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+volumes:
+  mysql_data:
+  postgres_data:
