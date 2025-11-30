@@ -14,25 +14,25 @@ export class UsersController {
     return this.usersService.getUserProfile({ id: userId });
   }
 
-  @Get()
+  @MessagePattern({cmd:'get-users'})
   getUsers(){
     return this.usersService.getUsers();
   }
 
-  @Post()
-  createUser(@Body() createUserDto: CreateUserDto){
+  @MessagePattern({cmd:'create-user'})
+  createUser(@Payload() createUserDto: CreateUserDto){
     return this.usersService.createUser(createUserDto);
   }
 
-  @Patch('/:id')
-  updateUser(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto){
-    // Attach the id from the route parameter to the DTO before passing it to the service
-    return this.usersService.updateUser(id, updateUserDto);
+  @MessagePattern({cmd:'update-user'})
+  updateUser(@Payload() data: { id: string, updateUserDto: UpdateUserDto }){
+    return this.usersService.updateUser(data.id, data.updateUserDto);
   }
 
-  @Delete('/:id')
-  deleteUser(@Param('id') id: string){
+  @MessagePattern({cmd:'delete-user'})
+  deleteUser(@Payload() id: string){
     return this.usersService.deleteUser(id);
   }
+
 
 }

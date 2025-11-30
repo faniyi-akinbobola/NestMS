@@ -1,7 +1,8 @@
+
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
-import * as hbs from 'nodemailer-express-handlebars';
+import nodemailerExpressHandlebars from 'nodemailer-express-handlebars';
 import { join } from 'path';
 
 @Injectable()
@@ -19,16 +20,28 @@ export class EmailService {
       },
     });
 
+    // Determine template path based on environment
+
+    const isProd = process.env.NODE_ENV === 'production';
+    let templatePath;
+    if (isProd) {
+      templatePath = join(__dirname, 'templates');
+    } else {
+      // Use process.cwd() to always resolve from project root in dev
+      templatePath = join(process.cwd(), 'apps/email/src/templates');
+    }
+    console.log('[EmailService] Using template path:', templatePath);
+
     this.transporter.use(
       'compile',
-      hbs({
+      nodemailerExpressHandlebars({
         viewEngine: {
-          partialsDir: join(__dirname, 'templates'),
+          partialsDir: templatePath,
           defaultLayout: false,
         },
-        viewPath: join(__dirname, 'templates'),
+        viewPath: templatePath,
         extName: '.hbs',
-      }),
+      })
     );
   }
 
@@ -44,7 +57,7 @@ export class EmailService {
     } catch (error) {
       // Log error or handle as needed
       console.error('Error sending signup email:', error);
-      throw error;
+      return null;
     }
   }
 

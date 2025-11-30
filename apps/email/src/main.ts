@@ -10,7 +10,7 @@ async function bootstrap() {
       urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
       queue: process.env.EMAIL_QUEUE || 'email_queue',
       queueOptions: {
-        durable: false
+        durable: true,
       },
     }
   });

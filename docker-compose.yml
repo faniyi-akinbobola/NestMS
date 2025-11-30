@@ -35,8 +35,11 @@ services:
       - auth
       - email
       - users
+      - rabbitmq
 
   auth:
+    depends_on:
+      - rabbitmq
     build:
       context: .
       dockerfile: ./apps/auth/Dockerfile
@@ -53,6 +56,7 @@ services:
       - "3002:3000"
     depends_on:
       - postgres
+      - rabbitmq
 
   users:
     build:
@@ -63,6 +67,7 @@ services:
       - "3003:3000"
     depends_on:
       - mysql
+      - rabbitmq
 
   rabbitmq:
     image: rabbitmq:3-management

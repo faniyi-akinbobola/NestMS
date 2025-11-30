@@ -1,44 +1,50 @@
-import { 
-  ExceptionFilter, 
-  Catch, 
-  ArgumentsHost, 
-  HttpException, 
-  HttpStatus 
+
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
-import { Request, Response } from 'express'; // Use your underlying framework types
+import { RpcException } from '@nestjs/microservices';
+import { Request, Response } from 'express';
 
-@Catch(HttpException)
+@Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  catch(exception: HttpException, host: ArgumentsHost) {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
-    
-    // Determine the status code of the error
-    const status = 
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
-
-    // Get the response object from the HttpException (can be a string or an object)
-    const errorResponse = exception.getResponse();
-    
-    // Standardize the response body structure
-    const responseBody = {
-      statusCode: status,
-      timestamp: new Date().toISOString(),
-      path: request.url,
-      // Check if the response is a standard NestJS error object or a string
-      message: (errorResponse as any)?.message || errorResponse || 'Internal Server Error',
-      error: (errorResponse as any)?.error || exception.message,
-    };
-
-    // Log the error (optional but recommended for debugging)
-    // console.error(`[${request.method}] ${request.url} failed with status ${status}:`, exception.stack);
-
-    // Send the standardized JSON response
-    response
-      .status(status)
-      .json(responseBody);
+  catch(exception: any, host: ArgumentsHost) {
+    // Check if the context is RPC (microservice) or HTTP
+    if (host.getType() === 'rpc') {
+      // For microservices, throw an RpcException
+      // If it's already an RpcException, just rethrow
+      if (exception instanceof RpcException) {
+        throw exception;
+      }
+      // If it's a Nest HttpException, extract message
+      if (exception instanceof HttpException) {
+        const errorResponse = exception.getResponse();
+        const message = (errorResponse as any)?.message || errorResponse || 'Internal Server Error';
+        throw new RpcException(message);
+      }
+      // Otherwise, wrap in RpcException
+      throw new RpcException(exception?.message || 'Internal Server Error');
+    } else {
+      // HTTP context (REST)
+      const ctx = host.switchToHttp();
+      const response = ctx.getResponse<Response>();
+      const request = ctx.getRequest<Request>();
+      const status =
+        exception instanceof HttpException
+          ? exception.getStatus()
+          : HttpStatus.INTERNAL_SERVER_ERROR;
+      const errorResponse = exception instanceof HttpException ? exception.getResponse() : null;
+      const responseBody = {
+        statusCode: status,
+        timestamp: new Date().toISOString(),
+        path: request?.url,
+        message: (errorResponse as any)?.message || errorResponse || exception?.message || 'Internal Server Error',
+        error: (errorResponse as any)?.error || exception?.message,
+      };
+      response.status(status).json(responseBody);
+    }
   }
 }

@@ -43,12 +43,15 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async deleteUser(id: string): Promise<User> {
-    const user = await this.usersRepository.findOneBy({id});
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    await this.usersRepository.delete(id);
-    return user;
-  } 
+async deleteUser(id: string) {
+  const user = await this.usersRepository.findOneBy({ id });
+
+  if (!user) {
+    return { error: 'User not found', status: 404 };  // return instead of throw
+  }
+
+  await this.usersRepository.delete(id);
+
+  return { message: 'User deleted', user };
+}
 }

@@ -16,4 +16,4 @@ COPY ./libs ./libs
 RUN npm install
 
 # 5. Start the API Gateway
-CMD ["npm", "run", "start:dev", "api-gateway"]
+CMD ["npm", "run", "start:dev:api-gateway"]

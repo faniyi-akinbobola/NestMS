@@ -9,17 +9,37 @@ export class EmailController {
   // -------------------------------
   // 📩 SIGNUP EMAIL
   // -------------------------------
-  @EventPattern('user_signup')
-  async handleUserSignup(
-    @Payload()
-    data: { email: string; name: string },
-  ) {
+  // @EventPattern('user_signup')
+  // async handleUserSignup(
+  //   @Payload()
+  //   data: { email: string; name: string },
+  // ) {
     
-    const { email, name } = data;
-    const userName = name ?? email.split('@')[0]; // use part of email as name
+  //   const { email, name } = data;
+  //   const userName = name ?? email.split('@')[0]; // use part of email as name
     
-    await this.emailService.sendSignupEmail(email, userName);
-  }
+  //   await this.emailService.sendSignupEmail(email, userName);
+  // }
+//   @EventPattern('user_signup')
+// async handleUserSignup(data: { email: string; name: string }) {
+//   try {
+//     const { email, name } = data;
+//     const userName = name ?? email.split('@')[0];
+
+//     await this.emailService.sendSignupEmail(email, userName);
+//   } catch (error) {
+//     console.error('Email sending failed:', error.message);
+//     // DO NOT rethrow!
+//   }
+// }
+
+@EventPattern('user_signup')
+handleSignupEmail(@Payload() data) {
+  console.log('SIGNUP EVENT RECEIVED', data);
+  return this.emailService.sendSignupEmail(data.email, data.name);
+}
+
+
 
   // -------------------------------
   // 🔐 LOGIN EMAIL
